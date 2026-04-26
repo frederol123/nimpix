@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16
+    container_name: nimpix-db
+    environment:
+      POSTGRES_DB: nimpix
+      POSTGRES_USER: nimpix
+      POSTGRES_PASSWORD: nimpix
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nimpix -d nimpix"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: laravel-php:latest
+    container_name: nimpix-api
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
