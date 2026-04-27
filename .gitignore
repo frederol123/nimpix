@@ -24,5 +24,5 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-config.yaml
+.continue/config.yaml
 plan.md
