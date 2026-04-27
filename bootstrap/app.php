@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -41,6 +42,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 'success' => false,
                 'message' => 'Unauthenticated.',
             ], 401);
+        });
+
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden.',
+            ], 403);
         });
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {

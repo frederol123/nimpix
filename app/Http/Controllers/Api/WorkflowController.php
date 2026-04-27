@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWorkflowRequest;
 use App\Http\Requests\UpdateWorkflowRequest;
+use App\Http\Resources\WorkflowResource;
 use App\Models\Workflow;
 
 class WorkflowController extends Controller
@@ -12,34 +13,40 @@ class WorkflowController extends Controller
     public function index()
     {
         $workflows = Workflow::query()
-            ->with('tasks')
+            ->with(['user', 'tasks'])
             ->latest()
-            ->get();
+            ->paginate();
 
-        return response()->json($workflows);
+        return WorkflowResource::collection($workflows);
     }
 
     public function store(StoreWorkflowRequest $request)
     {
-        $workflow = Workflow::create($request->validated());
+        $workflow = $request->user()->workflows()->create($request->validated());
 
-        return response()->json($workflow->load('tasks'), 201);
+        return (new WorkflowResource($workflow->load(['user', 'tasks'])))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show(Workflow $workflow)
     {
-        return response()->json($workflow->load('tasks'));
+        $this->authorize('view', $workflow);
+
+        return new WorkflowResource($workflow->load(['user', 'tasks']));
     }
 
     public function update(UpdateWorkflowRequest $request, Workflow $workflow)
     {
         $workflow->update($request->validated());
 
-        return response()->json($workflow->fresh()->load('tasks'));
+        return new WorkflowResource($workflow->fresh()->load(['user', 'tasks']));
     }
 
     public function destroy(Workflow $workflow)
     {
+        $this->authorize('delete', $workflow);
+
         $workflow->delete();
 
         return response()->noContent();
