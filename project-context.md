@@ -137,11 +137,30 @@ API JSON-ответы с полем `success`:
 | `2026_04_27_100000` | ✅ Этап 1: adds user_id FK to workflows (cascadeOnDelete) |
 | `2026_04_27_100001` | ✅ Этап 1: adds softDeletes (deleted_at) to workflows and tasks |
 
+## API Документация (Scramble)
+
+- **Scramble** (`dedoc/scramble` ^0.13) — авто-генерация OpenAPI 3.0 документации
+- Доступна по `/docs/api` (только в не-production окружении по умолчанию)
+- Автоматически документирует все API-роуты, Requests, Resources
+
+## Логирование ошибок
+
+- Канал `errors` в `config/logging.php`: daily JSON-лог (`storage/logs/errors.log`), уровень error, 30 дней
+- `bootstrap/app.php::reportable()`: для каждого исключения пишет в канал `errors` с контекстом (exception class, file, line, url, method, user_id, ip)
+- Остальные каналы: stack → single (`storage/logs/laravel.log`)
+
+## Health-check
+
+- `GET /up` → `HealthController` (инвокабл)
+- Проверяет: `database` (PDO-запрос), `cache` (write+read)
+- Ответ: `{"database": true, "cache": true, "timestamp": "..."}` — 200 если всё ок, 503 при сбое
+
 ## Ключевые файлы
 
 | Файл | Назначение |
 |------|-----------|
 | `routes/api.php` | Все API-роуты (публичные + auth:sanctum) |
+| `routes/web.php` | `/` (welcome) + `/up` (health-check) |
 | `app/Models/*.php` | User, Workflow, Task |
 | `app/Policies/*.php` | WorkflowPolicy, TaskPolicy |
 | `app/Http/Resources/*.php` | UserResource, WorkflowResource, TaskResource |
@@ -150,17 +169,22 @@ API JSON-ответы с полем `success`:
 | `app/Http/Controllers/Api/TaskController.php` | CRUD tasks + reorder + filtering |
 | `app/Http/Controllers/Api/VerificationController.php` | verify (signed), send (re-send verify email) |
 | `app/Http/Controllers/Api/PasswordResetController.php` | forgot (send token), reset (change password) |
+| `app/Http/Controllers/HealthController.php` | Health-check: DB + cache |
 | `app/Http/Controllers/Controller.php` | Базовый контроллер с AuthorizesRequests |
 | `app/Http/Requests/*.php` | StoreWorkflow, UpdateWorkflow, StoreTask, UpdateTask — все с policy authorize() |
-| `app/Notifications/ResetPasswordNotification.php` | Кастомное письмо сброса пароля с токеном |
-| `bootstrap/app.php` | Exception handlers + middleware |
+| `app/Notifications/ResetPasswordNotification.php` | Кастомное письмо сброса пароля с токеном (ShouldQueue) |
+| `app/Notifications/QueuedVerifyEmailNotification.php` | Queued-версия верификации (ShouldQueue) |
+| `bootstrap/app.php` | Exception handlers + error reportable + middleware |
 | `config/auth.php` | guards, providers, passwords, verification |
+| `config/logging.php` | channels: stack, single, daily, errors (JSON), papertrail, slack, etc. |
 | `database/factories/*.php` | UserFactory, WorkflowFactory (user_id), TaskFactory |
-| `database/seeders/DatabaseSeeder.php` | 1 тестовый пользователь |
+| `database/seeders/DatabaseSeeder.php` | 1 пользователь (verified) + 3 workflow × 5 задач |
 | `database/migrations/*.php` | 8 миграций |
+| `Dockerfile` | php:8.3-cli-alpine, pdo_pgsql, pdo_sqlite, zip, opcache, composer |
 | `docker-compose.yml` | db (postgres:16) + api (laravel-php) |
+| `.gitlab-ci.yml` | lint → test (PHP 8.4, PostgreSQL, миграции) |
+| `.github/workflows/tests.yml` | lint (Pint) + test (PHP 8.3/8.4/8.5) |
 | `phpunit.xml` | SQLite :memory:, RefreshDatabase |
-| `plan.md` | План развития проекта |
 
 ## Тесты
 
@@ -169,4 +193,4 @@ API JSON-ответы с полем `success`:
 - `tests/Feature/TaskTest.php` — 13 тестов: CRUD + 404 + 403 (чужой task) + unauth + validation (включая workflow ownership)
 - `tests/Feature/ExampleTest.php` — 1 тест: /
 - Запуск: `docker exec nimpix-api php artisan test`
-- Всего: 38 тестов, 98 assertions
+- Всего: 39 тестов, 99 assertions
