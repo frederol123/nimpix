@@ -13,7 +13,9 @@ class TaskTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $otherUser;
+
     private Workflow $workflow;
 
     protected function setUp(): void

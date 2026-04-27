@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Workflow;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateWorkflowRequest extends FormRequest

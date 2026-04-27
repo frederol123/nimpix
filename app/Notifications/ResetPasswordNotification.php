@@ -31,7 +31,7 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
             ->line('Use the following token to reset your password:')
             ->line($this->token)
             ->line('Send a POST request to /api/reset-password with email, token, password, and password_confirmation.')
-            ->line('This token will expire in ' . config('auth.passwords.users.expire') . ' minutes.')
+            ->line('This token will expire in '.config('auth.passwords.users.expire').' minutes.')
             ->line('If you did not request a password reset, no further action is required.');
     }
 }
