@@ -1,0 +1,45 @@
+stages:
+  - lint
+  - test
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - vendor/
+
+lint:
+  stage: lint
+  image: php:8.3-cli-alpine
+  before_script:
+    - apk add --no-cache sqlite-dev zip libzip-dev git unzip
+    - docker-php-ext-install pdo pdo_sqlite zip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install --prefer-dist --no-interaction --no-progress
+  script:
+    - composer lint
+
+test:
+  stage: test
+  image: php:8.3-cli-alpine
+  services:
+    - postgres:16
+  variables:
+    POSTGRES_DB: nimpix
+    POSTGRES_USER: nimpix
+    POSTGRES_PASSWORD: nimpix
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: nimpix
+    DB_USERNAME: nimpix
+    DB_PASSWORD: nimpix
+  before_script:
+    - apk add --no-cache postgresql-dev sqlite-dev zip libzip-dev git unzip
+    - docker-php-ext-install pdo pdo_pgsql pdo_sqlite zip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install --prefer-dist --no-interaction --no-progress
+    - cp .env.example .env
+    - php artisan key:generate
+    - php artisan migrate --force
+  script:
+    - php artisan test

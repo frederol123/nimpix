@@ -1,0 +1,14 @@
+node_modules/
+vendor/
+.env
+.env.*
+*.md
+.git/
+.idea/
+.vscode/
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+tests/
+phpunit.xml
